@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>m3u8 Player</title>
+    <style>
+        #video-container {
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+        <input type="text" id="urlInput" placeholder="Enter m3u8 URL" style="width: 80%; margin-bottom: 10px;">
+        <button onclick="loadVideo()">Play</button>
+        <br>
+        <video id="videoPlayer" controls></video>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        function loadVideo() {
+            const url = document.getElementById('urlInput').value;
+            const video = document.getElementById('videoPlayer');
+
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                });
+            } else {
+                alert('Your browser does not support playing m3u8 videos.');
+            }
+        }
+    </script>
+</body>
+</html>
