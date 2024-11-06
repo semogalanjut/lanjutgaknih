@@ -1,6 +1,7 @@
 {
   "routes": [
     { "src": "/cabang", "dest": "/cabang.html" },
-    { "src": "/playerm3u8", "dest": "/playerm3u8.html" }
+    { "src": "/playerm3u8", "dest": "/playerm3u8.html" },
+    { "src": "/imputdata", "dest": "/inputdata.html" }
   ]
 }
