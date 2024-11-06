@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Data as Text or Excel File</title>
+    <style>
+        /* Body background color */
+        body {
+            background-color: grey;
+        }
+
+        /* Two-column layout */
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+        }
+
+        .form-column {
+            width: 30%;  /* Fixed width for the first column */
+            padding-right: 20px;
+        }
+
+        .entries-column {
+            width: 70%;  /* 2nd column */
+            padding-left: 20px;
+            max-height: 100vh; /* Ensure the 2nd column occupies full height */
+            overflow-y: auto; /* Enable vertical scrolling for the entries column */
+            position: relative;
+        }
+
+        /* Font size for h2 */
+        h2 {
+            font-size: 20px;
+        }
+
+        /* Style input fields */
+        textarea {
+            width: 100%;  /* Use full width of the form column */
+            height: 60px;
+            font-size: 16px;
+            resize: both;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            height: 30px;
+            font-size: 16px;
+        }
+
+        /* Style for the entries table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            word-wrap: break-word; /* Wrap text in table cells */
+            background-color: lightgrey; /* Match table content background */
+        }
+
+        th {
+            background-color: rgb(224, 236, 194);  /* Light green for table header */
+            position: sticky;
+            top: 0;
+            z-index: 1;  /* Ensure header stays on top */
+        }
+
+        /* Style for Save buttons and file name input */
+        .save-buttons {
+            margin-top: 20px;
+        }
+
+        .save-section {
+            margin-top: 20px;
+        }
+
+        #fileName {
+            width: 100%;
+            height: 30px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+
+    <div class="container">
+        <!-- First Column: Input Form (30% Width) -->
+        <div class="form-column">
+            <h2>Input Form</h2>
+            <form id="inputForm" onsubmit="return false;">
+                <label for="name">Name:</label><br>
+                <textarea id="name" name="name" required></textarea><br><br>
+
+                <label for="link">Link:</label><br>
+                <textarea id="link" name="link" required></textarea><br><br>
+
+                <label for="hobby">Hobby:</label><br>
+                <input type="text" id="hobby" name="hobby" required><br><br>
+
+                <label for="type">Type:</label><br>
+                <input type="text" id="type" name="type" required><br><br>
+
+                <button type="button" onclick="addEntry()">Add Entry</button>
+            </form>
+
+            <!-- File name input and Save buttons -->
+            <div class="save-section">
+                <h3>Save File</h3>
+                <input type="text" id="fileName" placeholder="Enter file name" required>
+                <button type="button" onclick="saveAsText()">Save All as Text File</button>
+                <button type="button" onclick="saveAsExcel()">Save All as Excel File</button>
+            </div>
+        </div>
+
+        <!-- Second Column: Entries List (70% Width) -->
+        <div class="entries-column">
+            <h2>Entries:</h2>
+            <table id="entriesTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Link</th>
+                        <th>Hobby</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Entries will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <!-- Library to save as Excel -->
+
+    <script>
+        let entries = [];
+        let hasUnsavedChanges = false;
+
+        function addEntry() {
+            // Get form values
+            const name = document.getElementById('name').value;
+            const link = document.getElementById('link').value;
+            const hobby = document.getElementById('hobby').value;
+            const type = document.getElementById('type').value;
+
+            // Check if all fields are filled out
+            if (name === "" || link === "" || hobby === "" || type === "") {
+                alert("Please fill out all fields before adding the entry.");
+                return;
+            }
+
+            // Add the entry to the entries array
+            entries.push([name, link, hobby, type]);
+            hasUnsavedChanges = true;  // Mark that we have unsaved changes
+
+            // Update the table with the new entry
+            const tbody = document.querySelector('#entriesTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${name}</td><td>${link}</td><td>${hobby}</td><td>${type}</td>`;
+            tbody.appendChild(row);
+
+            // Clear the form fields
+            document.getElementById('inputForm').reset();
+
+            // Set the cursor back to the 'name' input field
+            document.getElementById('name').focus();
+        }
+
+        function saveAsText() {
+            const fileName = document.getElementById('fileName').value || 'entries';  // Get the file name
+
+            if (entries.length === 0) {
+                alert("No entries to save!");
+                return;
+            }
+
+            // Join the entries with newline characters to create the text content
+            const textToSave = entries.map(entry => entry.join(', ')).join('\n');
+
+            // Create a Blob (Binary Large Object) with the text data
+            const blob = new Blob([textToSave], { type: 'text/plain' });
+
+            // Create a download link and trigger a click to download the file
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName + '.txt';  // Use the entered file name
+            link.click();
+
+            hasUnsavedChanges = false;  // No more unsaved changes after saving
+        }
+
+        function saveAsExcel() {
+            const fileName = document.getElementById('fileName').value || 'entries';  // Get the file name
+
+            if (entries.length === 0) {
+                alert("No entries to save!");
+                return;
+            }
+
+            // Create a workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([["Name", "Link", "Hobby", "Type"], ...entries]);
+
+            // Append the worksheet to the workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Entries');
+
+            // Export the workbook as an Excel file
+            XLSX.writeFile(wb, fileName + '.xlsx');  // Use the entered file name
+
+            hasUnsavedChanges = false;  // No more unsaved changes after saving
+        }
+
+        // Warning when the user tries to leave the page if there are unsaved entries
+        window.addEventListener('beforeunload', function (event) {
+            if (hasUnsavedChanges) {
+                event.preventDefault();
+                event.returnValue = '';  // Display the warning message (browser handles it)
+            }
+        });
+    </script>
+
+</body>
+</html>
